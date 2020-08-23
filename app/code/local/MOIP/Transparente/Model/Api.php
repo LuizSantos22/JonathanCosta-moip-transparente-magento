@@ -319,7 +319,7 @@ class MOIP_Transparente_Model_Api
         $taxvat        = $order->getCustomerTaxvat();
         $taxvat        = preg_replace("/[^0-9]/", "", $taxvat);
 
-        if (strlen($taxvat) > 11) {
+        if (strlen($taxvat) === 14) {
             $document_type = "CNPJ";
         } else {
             $document_type = "CPF";
