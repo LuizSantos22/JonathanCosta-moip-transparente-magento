@@ -339,17 +339,17 @@ jQuery.extend( {
 
 	// Workarounds based on findings by Jim Driscoll
 	// http://weblogs.java.net/blog/driscoll/archive/2009/09/08/eval-javascript-global-context
-	globalEval: function( data ) {
-		if ( data && jQuery.trim( data ) ) {
-
-			// We use execScript on Internet Explorer
-			// We use an anonymous function so that context is window
-			// rather than jQuery in Firefox
-			( window.execScript || function( data ) {
-				window[ "eval" ].call( window, data ); // jscs:ignore requireDotNotation
-			} )( data );
-		}
-	},
+globalEval: function( data ) {
+    if ( data && jQuery.trim( data ) ) {
+        try {
+            // Use Function constructor as a safer alternative to eval
+            const func = new Function(data);
+            func.call(window);
+        } catch (error) {
+            console.error("Erro ao executar código global:", error);
+        }
+    }
+},
 
 	// Convert dashed to camelCase; used by the css and data modules
 	// Microsoft forgot to hump their vendor prefix (#9572)
@@ -10988,39 +10988,35 @@ jQuery.fn.andSelf = jQuery.fn.addBack;
 // https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
 if ( typeof define === "function" && define.amd ) {
-	define( "jquery", [], function() {
-		return jQuery;
-	} );
+    define( "jquery", [], function() {
+        return jQuery;
+    } );
 }
-
-
 
 var
+    // Map over jQuery in case of overwrite
+    _jQuery = window.jQuery,
+    // Map over the $ in case of overwrite
+    _$ = window.$;
 
-	// Map over jQuery in case of overwrite
-	_jQuery = window.jQuery,
-
-	// Map over the $ in case of overwrite
-	_$ = window.$;
-
+// Modificação: Garantir que jQuery.noConflict() libere o $ para Prototype.js
 jQuery.noConflict = function( deep ) {
-	if ( window.$ === jQuery ) {
-		window.$ = _$;
-	}
-
-	if ( deep && window.jQuery === jQuery ) {
-		window.jQuery = _jQuery;
-	}
-
-	return jQuery;
+    if ( window.$ === jQuery ) {
+        window.$ = _$; // Restaura o $ original (Prototype.js)
+    }
+    if ( deep && window.jQuery === jQuery ) {
+        window.jQuery = _jQuery; // Restaura o jQuery original, se necessário
+    }
+    return jQuery;
 };
 
-// Expose jQuery and $ identifiers, even in
-// AMD (#7102#comment:10, https://github.com/jquery/jquery/pull/557)
-// and CommonJS for browser emulators (#13566)
+// Modificação: Evitar expor globalmente o $ ou jQuery
+// Isso é importante para evitar conflitos com Prototype.js
 if ( !noGlobal ) {
-	window.jQuery = window.$ = jQuery;
+    window.jQuery = jQuery; // Mantém apenas jQuery global
+    window.$ = _$; // Libera $ para Prototype.js
 }
 
+// Retorna jQuery para uso interno, sem poluir o escopo global
 return jQuery;
 }));
